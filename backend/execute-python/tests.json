@@ -1,0 +1,38 @@
+{
+  "tests": [
+    {
+      "name": "Execute simple print statement",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "code": "print('Hello, Python!')"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true,
+        "output": "Hello, Python!"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Execute dictionary sorting code",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "code": "my_dict = {'b': 2, 'a': 1, 'c': 3}\nsorted_dict = dict(sorted(my_dict.items(), key=lambda x: x[1]))\nprint(sorted_dict)"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    },
+
+    {
+      "name": "Handle OPTIONS request for CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    }
+  ]
+}

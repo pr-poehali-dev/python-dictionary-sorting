@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import func2url from '../../backend/func2url.json';
 
 const Index = () => {
   const [demoStep, setDemoStep] = useState(0);
@@ -23,6 +25,8 @@ sorted_dict = dict(sorted(my_dict.items(), key=lambda x: x[1]))
 print(sorted_dict)`);
   const [demoDict, setDemoDict] = useState<Record<string, number>>({});
   const [sortedDict, setSortedDict] = useState<Record<string, number>>({});
+  const [isRunning, setIsRunning] = useState(false);
+  const [executionResult, setExecutionResult] = useState<{success: boolean; output: string; error?: string} | null>(null);
 
   const demoSteps = [
     {
@@ -240,15 +244,65 @@ for i in range(5):
                 />
                 
                 <div className="flex gap-3">
-                  <Button size="lg" className="gap-2">
+                  <Button 
+                    size="lg" 
+                    className="gap-2"
+                    onClick={async () => {
+                      setIsRunning(true);
+                      setExecutionResult(null);
+                      try {
+                        const response = await fetch(func2url['execute-python'], {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ code: practiceCode })
+                        });
+                        const result = await response.json();
+                        setExecutionResult(result);
+                      } catch (error) {
+                        setExecutionResult({
+                          success: false,
+                          output: '',
+                          error: 'Ошибка соединения с сервером'
+                        });
+                      } finally {
+                        setIsRunning(false);
+                      }
+                    }}
+                    disabled={isRunning}
+                  >
                     <Icon name="Play" size={18} />
-                    Запустить код
+                    {isRunning ? 'Выполняется...' : 'Запустить код'}
                   </Button>
-                  <Button variant="outline" size="lg" className="gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="gap-2"
+                    onClick={() => {
+                      navigator.clipboard.writeText(practiceCode);
+                    }}
+                  >
                     <Icon name="Copy" size={18} />
                     Скопировать
                   </Button>
                 </div>
+
+                {executionResult && (
+                  <Alert className={executionResult.success ? 'bg-primary/5 border-primary/30' : 'bg-destructive/5 border-destructive/30'}>
+                    <Icon 
+                      name={executionResult.success ? 'CheckCircle2' : 'AlertCircle'} 
+                      size={18} 
+                      className={executionResult.success ? 'text-primary' : 'text-destructive'}
+                    />
+                    <AlertDescription>
+                      <div className="font-semibold mb-2">
+                        {executionResult.success ? 'Результат выполнения:' : 'Ошибка:'}
+                      </div>
+                      <pre className="bg-slate-950 text-green-400 p-4 rounded font-mono text-sm overflow-x-auto">
+                        {executionResult.success ? executionResult.output : executionResult.error}
+                      </pre>
+                    </AlertDescription>
+                  </Alert>
+                )}
 
                 <Card className="bg-accent/30">
                   <CardHeader>
